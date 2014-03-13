@@ -1,33 +1,31 @@
-# Project Title
-Insert the name of your project
+# You are the data
 
 ## Authors
-- Insert main author name, surname, github account
-- Insert other author(s) name, surname, github account (one per list element)
+- Marcin Ignac [http://github.com/vorg](http://github.com/vorg)
 
 ## Description
-Insert a description containing about 100 to 150 words, including your motivation and the meaning behind your idea and execution. The Judges will be keen to know how your idea pushes the boundaries of code and technology. 
+We treat the web as a source, a place we get things from. With a single click the collective power of the servers in the cloud delivers an answer to any question. We accept it and move forward. But what have had just happend? 
+
+I want the remove layers of abstraction covering a simple web page request. We leave traces, we constantly leave little bits of information, here and there, IP, ping, cookie, geolocation... 
+
+For the web nowadays, we are the data.
 
 ## Link to Prototype
-NOTE: If your project lives online you can add one or more links here. Make sure you have a stable version of your project running before linking it.
+N/A
 
-[Example Link](http://www.google.com "Example Link")
+## TODO: Example Code
+```coffeescript
+#one page, many different types of data
+@mimeTypes = unique(@entries.map(getEntryMimeType)) 
 
-## Example Code
-NOTE: Wrap your code blocks or any code citation by using ``` like the example below.
-```
-function test() {
-  console.log("Printing a test");
-}
+#one page, many different servers
+@servers = unique(@entries.map(getEntryUrl).map(urlToHostName))
+
+#one page, many different organizations
+@rootServers = unique(@servers.map(extractTopLevelDomain))
 ```
 ## Links to External Libraries
- NOTE: You can also use this space to link to external libraries or Github repositories you used on your project.
 
-[Example Link](http://www.google.com "Example Link")
-
-## Images & Videos
-NOTE: For additional images you can either use a relative link to an image on this repo or an absolute link to an externally hosted image.
-
-![Example Image](project_images/cover.jpg?raw=true "Example Image")
-
-https://www.youtube.com/watch?v=30yGOxJJ2PQ
+[Plask](http://plask.org "Plask") - multimedia toolkit by Dean McNamee  
+[Pex](https://github.com/vorg/pex/ "Pex") - my WebGL engine for Plask and Web Browsers
+[Ghost.py](http://jeanphix.me/Ghost.py/ "Ghost.py") - webkit web client for Python

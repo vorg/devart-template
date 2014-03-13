@@ -1,16 +1,22 @@
 {
     "technologies": {
         "apis": [
-            "insert apis"
         ],
         "platforms": [
-            "insert platforms"
+            "app engine",
+            "google chrome",
+            "raspberry pi"
         ],
         "toolkits": [
-            "insert toolkits"
+            "plask",
+            "pex",
+            "webgl",
+            "ghost.py"
         ]
     },
     "themes": [
-        "insert themes"
+        "Data",
+        "Privacy",
+        "Web"
     ]
 }
