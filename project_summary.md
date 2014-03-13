@@ -24,8 +24,9 @@ N/A
 #one page, many different organizations
 @rootServers = unique(@servers.map(extractTopLevelDomain))
 ```
+
 ## Links to External Libraries
 
 [Plask](http://plask.org "Plask") - multimedia toolkit by Dean McNamee  
-[Pex](https://github.com/vorg/pex/ "Pex") - my WebGL engine for Plask and Web Browsers
+[Pex](https://github.com/vorg/pex/ "Pex") - my WebGL engine for Plask and Web Browsers  
 [Ghost.py](http://jeanphix.me/Ghost.py/ "Ghost.py") - webkit web client for Python
