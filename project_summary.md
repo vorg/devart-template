@@ -11,7 +11,8 @@ I want the remove layers of abstraction covering a simple web page request. We l
 For the web nowadays, we are the data.
 
 ## Link to Prototype
-N/A
+
+01 / Burst [http://marcinignac.com/projects/you-are-the-data/lab/01_burst/](http://marcinignac.com/projects/you-are-the-data/lab/01_burst/)
 
 ## Example Code
 

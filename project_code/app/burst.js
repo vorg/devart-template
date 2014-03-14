@@ -116,6 +116,10 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         _this.mimeTypes = unique(_this.entries.map(getEntryMimeType));
         _this.servers = unique(_this.entries.map(getEntryUrl).map(urlToHostName));
         _this.rootServers = unique(_this.servers.map(extractTopLevelDomain));
+        console.log('@entries.length', _this.entries.length);
+        console.log('@mimeTypes.length', _this.mimeTypes.length);
+        console.log('@rootServers.length', _this.rootServers.length);
+        console.log(_this.mimeTypes, _this.rootServers);
         _this.buildInstances();
         _this.buildInstances();
         if (Platform.isPlask) {

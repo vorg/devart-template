@@ -83,6 +83,11 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         @servers = unique(@entries.map(getEntryUrl).map(urlToHostName))
         @rootServers = unique(@servers.map(extractTopLevelDomain))
 
+        console.log('@entries.length', @entries.length)
+        console.log('@mimeTypes.length', @mimeTypes.length)
+        console.log('@rootServers.length', @rootServers.length)
+        console.log( @mimeTypes, @rootServers)
+
         @buildInstances()
         @buildInstances()
 
