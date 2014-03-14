@@ -238,21 +238,21 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       this.gl.disable(this.gl.DEPTH_TEST);
       color = fx().render({
         drawFunc: this.drawScene.bind(this),
-        bpp: 32,
+        bpp2: 32,
         depth: true,
         width: this.width,
         height: this.height
       });
       depth = color.render({
         drawFunc: this.drawDepth.bind(this),
-        bpp: 32,
+        bpp2: 32,
         depth: true,
         width: this.width,
         height: this.height
       });
       foggy = color.fog(depth, {
         fogColor: this.bgColor,
-        bpp: 32
+        bpp2: 32
       });
       foggy.blit({
         width: this.width,

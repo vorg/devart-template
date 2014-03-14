@@ -180,10 +180,12 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       @gl.clear(@gl.COLOR_BUFFER_BIT)
       @gl.disable(@gl.DEPTH_TEST)
 
-      color = fx().render({drawFunc: this.drawScene.bind(this), bpp: 32, depth: true, width: @width, height: @height})
-      depth = color.render({drawFunc: this.drawDepth.bind(this), bpp: 32, depth: true, width: @width, height: @height})
-      foggy = color.fog(depth, { fogColor: @bgColor, bpp: 32 })
+      color = fx().render({drawFunc: this.drawScene.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      depth = color.render({drawFunc: this.drawDepth.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      foggy = color.fog(depth, { fogColor: @bgColor, bpp2: 32 })
       #foggy = foggy.fxaa();
       foggy.blit({ width: @width, height: @height })
       if Platform.isPlask then @recorder.capture()
+
+      #@draw = () -> console
   )
