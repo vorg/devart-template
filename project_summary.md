@@ -13,8 +13,9 @@ For the web nowadays, we are the data.
 ## Link to Prototype
 N/A
 
-## TODO: Example Code
-```coffeescript
+## Example Code
+
+```
 #one page, many different types of data
 @mimeTypes = unique(@entries.map(getEntryMimeType)) 
 
@@ -27,6 +28,8 @@ N/A
 
 ## Links to External Libraries
 
-[Plask](http://plask.org "Plask") - multimedia toolkit by Dean McNamee  
+[Plask](http://plask.org "Plask") - multimedia programming environment  
 [Pex](https://github.com/vorg/pex/ "Pex") - my WebGL engine for Plask and Web Browsers  
-[Ghost.py](http://jeanphix.me/Ghost.py/ "Ghost.py") - webkit web client for Python
+[Ghost.py](http://jeanphix.me/Ghost.py/ "Ghost.py") - webkit web client for Python  
+[omggif](https://github.com/deanm/omggif "omggif") - gif encoder/decoder  
+[sitename](https://github.com/disconnectme/sitename "sitename") - website’s canonical domain name resolver

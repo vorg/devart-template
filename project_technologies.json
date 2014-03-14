@@ -11,7 +11,9 @@
             "plask",
             "pex",
             "webgl",
-            "ghost.py"
+            "ghost.py",
+            "omggif",
+            "sitename"
         ]
     },
     "themes": [
