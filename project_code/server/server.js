@@ -32,7 +32,6 @@ function generateHar(url, harFilePath, callback) {
     }
     else {
       if (fs.existsSync(harFilePath)) {
-        console.log('reading generated file');
         fs.readFile(harFilePath, { encoding: 'utf-8' }, callback);
       }
       else {
@@ -60,7 +59,6 @@ app.get('/:url', function(req, res){
   getHar(req.params.url, function(err, har) {
     res.setHeader('Content-Type', 'application/json');
     var json = har;
-    console.log(json);
     if (err) {
       console.log('ERROR', err);
       json = JSON.stringify({ error: err });
