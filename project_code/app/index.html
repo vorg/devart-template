@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>You are the data</title>
+  <link rel='stylesheet' type='text/css' href='css/style.css'/>
+  <script type="text/javascript" src="lib/require.js"></script>
+  <script type="text/javascript" src="lib/pex.js"></script>
+  <script type="text/javascript" src="index.js"></script>
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-514984-9']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+</head>
+<body>
+  <div class="caption">
+    Sketch 03 / Server request.
+    Part of <a href="https://devart.withgoogle.com/#/project/17602419">You are the data</a> DevArt project by 
+    <a href="http://marcinignac.com">Marcin Ignac</a>
+  </div>
+  <div id="introContainer">
+    <div id="intro">
+      <h1>Where would you like to go?</h1>
+      <input type="text" id="query" name="query" placeholder="e.g. http://google.com"/>
+      <a href="#" id="goBtn">GO</a>
+    </div>
+  </intro>
+</body></html>
