@@ -59,7 +59,18 @@ urlToHostName = (function() {
 })();
 
 extractTopLevelDomain = function(domain) {
-  return domain.match(/[^\.]+\.[^\.]+$/)[0];
+  var e;
+
+  try {
+    return domain.match(/[^\.]+\.[^\.]+$/)[0];
+  } catch (_error) {
+    e = _error;
+    if (domain.indexOf('data') === 0) {
+      return 'data';
+    } else {
+      return 'undefined';
+    }
+  }
 };
 
 pad = function(num, char, len) {
@@ -100,6 +111,7 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
     },
     initScene: function() {
       this.instances = [];
+      this.instances2 = [];
       this.camera = new PerspectiveCamera(60, this.width / this.height);
       this.scene = new Scene();
       this.camera.target = new Vec3(0, 0, -20);
@@ -112,9 +124,6 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         var boom;
 
         data = JSON.parse(data);
-        console.log(data.log.entries.map(function(e) {
-          return e.request.url;
-        }));
         _this.entries = data.log.entries;
         console.log('data.log.entries.length', data.log.entries.length);
         _this.mimeTypes = unique(_this.entries.map(getEntryMimeType));
@@ -132,7 +141,7 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       });
     },
     buildInstances: function() {
-      var entry, entryStartDate, entryStartTime, entryTime, pageEndTime, pageStartTime, _i, _j, _len, _len1, _ref5, _ref6;
+      var entry, entryStartDate, entryStartTime, entryTime, geom, pageEndTime, pageStartTime, white, _i, _j, _len, _len1, _ref5, _ref6;
 
       pageStartTime = 0;
       pageEndTime = 0;
@@ -157,6 +166,29 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         entry._info.pageStartTime = pageStartTime;
         entry._info.pageEndTime = pageEndTime;
       }
+      white = Color.create(1, 1, 1, 1.0);
+      this.instanceMaterial = new SolidColor({
+        color: white,
+        specularColor: new Color(0.1, 0.1, 0.1, 1.0),
+        ambientColor: new Color(0.1, 0.1, 0.1, 1),
+        wrap: 1,
+        correctGamma: true,
+        conserveDiffuseEnergy: true
+      });
+      this.instanceGammaMaterial = new CorrectedGamma({
+        diffuseColor: white,
+        specularColor: new Color(0.1, 0.1, 0.1, 1.0),
+        ambientColor: new Color(0.1, 0.1, 0.1, 1),
+        wrap: 1,
+        correctGamma: true,
+        conserveDiffuseEnergy: true
+      });
+      geom = new Cube(0.1, 0.1, 2.5);
+      geom.computeEdges();
+      this.instanceMesh = new Mesh(geom, this.instanceGammaMaterial);
+      this.instanceMesh2 = new Mesh(geom, this.instanceGammaMaterial, {
+        useEdges: true
+      });
       this.entries.map(this.makeEntryInstance.bind(this));
       return console.log('buildInstances', 'done', this.entries.length, (pageEndTime - pageStartTime) / 1000 + 's');
     },
@@ -169,59 +201,78 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       filename += "_" + (pad(d.getHours(), '0', 2)) + ":" + (pad(d.getMinutes(), '0', 2)) + ":" + (pad(d.getSeconds(), '0', 2)) + ".png";
       return this.gl.writeImage('png', filename);
     },
+    mimeTypeToColor: function(mimeType) {
+      var hue;
+
+      hue = 0;
+      if (mimeType.indexOf('javascript') !== -1 || mimeType.indexOf('ecmascript') !== -1) {
+        hue = 0.57;
+      }
+      if (mimeType.indexOf('html') !== -1 || mimeType.indexOf('css') !== -1) {
+        hue = 0.37;
+      }
+      if (mimeType.indexOf('image') !== -1) {
+        hue = 0.09;
+      }
+      if (mimeType.indexOf('flash') !== -1 || mimeType.indexOf('video') !== -1) {
+        hue = 0.8;
+      }
+      if (mimeType.indexOf('json') !== -1 || mimeType.indexOf('xml') !== -1 || mimeType.indexOf('text/plain') !== -1) {
+        hue = 0.09;
+      }
+      if (hue === 0) {
+        return Color.createHSV(0, 0, 0.7);
+      } else {
+        return Color.createHSV(hue, 0.8, 1.7);
+      }
+    },
     makeEntryInstance: function(entry, entryIndex) {
-      var b, color, entryInstance, entryInstance2, geom, hue, info, mimeType, r, rootServer, white;
+      var color, entryInstance, entryInstance2, info, mimeType, rootServer, setCookies;
 
       rootServer = urlToHostName(getEntryUrl(entry));
       mimeType = getEntryMimeType(entry);
-      r = entryIndex / 32;
-      hue = this.mimeTypes.indexOf(mimeType) / this.mimeTypes.length;
-      color = Color.createHSV(hue, 0.8, 0.7 + r);
-      b = 2;
-      white = Color.create(b, b, b, 1.0);
-      geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7);
-      entryInstance = new Mesh(geom, new CorrectedGamma({
-        diffuseColor: white,
-        specularColor: new Color(0.1, 0.1, 0.1, 1.0),
-        ambientColor: new Color(0.1, 0.1, 0.1, 1),
-        wrap: 1,
-        correctGamma: true,
-        conserveDiffuseEnergy: true
-      }));
-      entryInstance = new Mesh(geom, new SolidColor({
-        color: white,
-        specularColor: new Color(0.1, 0.1, 0.1, 1.0),
-        ambientColor: new Color(0.1, 0.1, 0.1, 1),
-        wrap: 1,
-        correctGamma: true,
-        conserveDiffuseEnergy: true
-      }));
+      setCookies = entry.response.headers.filter(function(header) {
+        return header.name === 'Set-Cookie';
+      });
+      if (entry.request.cookies.length > 0 || setCookies.length > 0) {
+        console.log(entryIndex, entry.request.url, entry.request.cookies.length, setCookies.length, setCookies);
+      }
       info = entry._info;
-      entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4, 4);
+      color = this.mimeTypeToColor(mimeType);
+      entryInstance = {};
+      entryInstance.position = randomVec3(10);
+      entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4.5, 4.5);
       entryInstance.position.y = randomFloat(-1, 1);
-      entryInstance.position.z = 0;
-      this.instances.push(entryInstance);
-      geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7);
-      entryInstance2 = new Mesh(geom, new CorrectedGamma({
-        diffuseColor: color,
-        specularColor: new Color(0.1, 0.1, 0.1, 1.0),
-        ambientColor: new Color(0.1, 0.1, 0.1, 1),
-        wrap: 1,
-        correctGamma: true,
-        conserveDiffuseEnergy: true
-      }));
+      entryInstance.position.z = 1;
+      entryInstance.scale = new Vec3(1, 1, 1);
+      entryInstance.scale.x = info.time / 1000;
+      entryInstance.scale.y = 1.4;
+      entryInstance.scale.z = 1.05;
+      if (setCookies.length > 0) {
+        entryInstance.uniforms = {
+          diffuseColor: new Color(2, 0, 0, 1)
+        };
+        this.instances2.push(entryInstance);
+      }
+      entryInstance2 = {};
       entryInstance2.position = entryInstance.position.dup();
-      this.instances.push(entryInstance2);
-      return this.scene.add(entryInstance2);
+      entryInstance2.uniforms = {
+        diffuseColor: color
+      };
+      entryInstance2.scale = new Vec3(1, 1, 1);
+      entryInstance2.scale.x = info.time / 1000;
+      return this.instances.push(entryInstance2);
     },
     drawScene: function() {
       this.gl.clearColor(this.bgColor.r, this.bgColor.g, this.bgColor.b, this.bgColor.a);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
       this.gl.enable(this.gl.DEPTH_TEST);
-      this.scene.draw(this.camera);
-      if (this.needsScreenshot) {
-        this.saveScreenshot('screenshots');
-        return this.needsScreenshot = false;
+      this.gl.lineWidth(2);
+      if (this.instanceMesh) {
+        this.instanceMesh.drawInstances(this.camera, this.instances);
+      }
+      if (this.instanceMesh2) {
+        return this.instanceMesh2.drawInstances(this.camera, this.instances2);
       }
     },
     drawDepth: function() {
@@ -253,41 +304,10 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       }
     },
     draw: function() {
-      var color, depth, foggy;
-
-      if (Platform.isPlask) {
-        this.recorder.update();
-      }
-      timeline.Timeline.getGlobalInstance().update(Time.delta);
-      this.camera.updateMatrices();
       this.gl.clearColor(1, 0, 0, 1);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
       this.gl.disable(this.gl.DEPTH_TEST);
-      color = fx().render({
-        drawFunc: this.drawScene.bind(this),
-        bpp2: 32,
-        depth: true,
-        width: this.width,
-        height: this.height
-      });
-      depth = color.render({
-        drawFunc: this.drawDepth.bind(this),
-        bpp2: 32,
-        depth: true,
-        width: this.width,
-        height: this.height
-      });
-      foggy = color.fog(depth, {
-        fogColor: this.bgColor,
-        bpp2: 32
-      });
-      foggy.blit({
-        width: this.width,
-        height: this.height
-      });
-      if (Platform.isPlask) {
-        return this.recorder.capture();
-      }
+      return this.drawScene();
     }
   });
 });

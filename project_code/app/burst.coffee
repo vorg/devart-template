@@ -33,7 +33,11 @@ urlToHostName = (() ->
 )()
 
 extractTopLevelDomain = (domain) ->
-  domain.match(/[^\.]+\.[^\.]+$/)[0]
+  try
+    domain.match(/[^\.]+\.[^\.]+$/)[0]
+  catch e
+    if domain.indexOf('data') == 0 then return 'data'
+    else return 'undefined'
 
 # adds leading zeros to a number until certain length is met
 pad = (num, char, len) ->
@@ -67,6 +71,7 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
 
     initScene: () ->
       @instances = []
+      @instances2 = []
       @camera = new PerspectiveCamera(60, @width / @height)
       @scene = new Scene()
       #@arcball = new Arcball(this, @camera)
@@ -77,9 +82,12 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
     loadData: () ->
       #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Fdevart.withgoogle.com%2F%23%2Fproject%2F17602419%3Fq%3Dyou%2520are', (data) =>
       #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Fmarcinignac.com/', (data) =>
+      #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
+      #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Ffacebook.com%2F', (data) =>
       IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
+        #console.log(data)
         data = JSON.parse(data)
-        console.log(data.log.entries.map((e) -> e.request.url))
+        #console.log(data.log.entries.map((e) -> e.request.url))
         @entries = data.log.entries
 
         console.log('data.log.entries.length', data.log.entries.length)
@@ -124,6 +132,15 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         entry._info.pageStartTime = pageStartTime
         entry._info.pageEndTime = pageEndTime
 
+      white = Color.create(1, 1, 1, 1.0)
+      @instanceMaterial = new SolidColor({color: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true })
+      @instanceGammaMaterial = new CorrectedGamma({diffuseColor: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true })
+
+      geom = new Cube(0.1, 0.1, 2.5)
+      geom.computeEdges()
+      @instanceMesh = new Mesh(geom, @instanceGammaMaterial)
+      @instanceMesh2 = new Mesh(geom, @instanceGammaMaterial, { useEdges: true })
+
       @entries.map(@makeEntryInstance.bind(this))
       console.log('buildInstances', 'done', @entries.length, (pageEndTime - pageStartTime)/1000 + 's')
 
@@ -134,44 +151,84 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       filename += "_#{pad(d.getHours(),'0',2)}:#{pad(d.getMinutes(),'0',2)}:#{pad(d.getSeconds(),'0',2)}.png"
       @gl.writeImage('png', filename)
 
+    mimeTypeToColor: (mimeType) ->
+      #r = entryIndex/32
+      #hue = @mimeTypes.indexOf(mimeType) / @mimeTypes.length
+      hue = 0
+      if mimeType.indexOf('javascript') != -1 || mimeType.indexOf('ecmascript') != -1
+        hue = 0.57 #code
+      if mimeType.indexOf('html') != -1 || mimeType.indexOf('css') != -1
+        hue = 0.37 #ui
+      if mimeType.indexOf('image') != -1
+        hue = 0.09 #images
+      if mimeType.indexOf('flash') != -1 || mimeType.indexOf('video') != -1
+        hue = 0.8 #video
+      if mimeType.indexOf('json') != -1 || mimeType.indexOf('xml') != -1 || mimeType.indexOf('text/plain') != -1
+        hue = 0.09 #data
+
+      if hue == 0
+        Color.createHSV(0, 0, 0.7)
+      else
+        Color.createHSV(hue, 0.8, 1.7)
+
+
     makeEntryInstance: (entry, entryIndex) ->
       rootServer = urlToHostName(getEntryUrl(entry))
       mimeType = getEntryMimeType(entry)
 
-      r = entryIndex/32
-      hue = @mimeTypes.indexOf(mimeType) / @mimeTypes.length
-      #hue = 0.2;
-      color = Color.createHSV(hue, 0.8, 0.7 + r)
-      b = 2;
-      white = Color.create(b, b, b, 1.0)
+      setCookies = entry.response.headers.filter (header) ->
+        header.name == 'Set-Cookie'
+      if entry.request.cookies.length > 0 || setCookies.length > 0
+        console.log(entryIndex, entry.request.url, entry.request.cookies.length, setCookies.length, setCookies)
 
-      geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7)
-      entryInstance = new Mesh(geom, new CorrectedGamma({diffuseColor: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
-      entryInstance = new Mesh(geom, new SolidColor({color: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
-      #entryInstance.position = randomVec3(10)
       info = entry._info
-      entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4, 4)
+
+      color = @mimeTypeToColor(mimeType)
+
+      #geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7)
+      #entryInstance = new Mesh(geom, new CorrectedGamma({diffuseColor: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
+      entryInstance = {}
+      entryInstance.position = randomVec3(10)
+
+      entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4.5, 4.5)
       entryInstance.position.y = randomFloat(-1, 1)
-      entryInstance.position.z = 0
-      @instances.push(entryInstance)
+      entryInstance.position.z = 1
+      entryInstance.scale = new Vec3(1, 1, 1)
+      entryInstance.scale.x = info.time / 1000;
+      entryInstance.scale.y = 1.4
+      entryInstance.scale.z = 1.05
+      if setCookies.length > 0
+        entryInstance.uniforms = {
+          diffuseColor: new Color(2, 0, 0, 1)
+        }
+        @instances2.push(entryInstance)
       #@scene.add(entryInstance)
 
-      geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7)
-      entryInstance2 = new Mesh(geom, new CorrectedGamma({diffuseColor: color, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
+      entryInstance2 = {}
       entryInstance2.position = entryInstance.position.dup()
+      entryInstance2.uniforms = {
+        diffuseColor: color
+      }
+      entryInstance2.scale = new Vec3(1, 1, 1)
+      entryInstance2.scale.x = info.time / 1000;
       #entryInstance2.position.z += 0.01 + 1.5
       @instances.push(entryInstance2)
-      @scene.add(entryInstance2)
+
+      #@scene.add(entryInstance2)
 
     drawScene: () ->
       @gl.clearColor(@bgColor.r, @bgColor.g, @bgColor.b, @bgColor.a)
       @gl.clear(@gl.COLOR_BUFFER_BIT | @gl.DEPTH_BUFFER_BIT)
       @gl.enable(@gl.DEPTH_TEST)
-      @scene.draw(@camera)
+      @gl.lineWidth(2)
+      #@scene.draw(@camera)
 
-      if @needsScreenshot
-        @saveScreenshot('screenshots')
-        @needsScreenshot = false
+      if @instanceMesh then @instanceMesh.drawInstances(@camera, @instances)
+      if @instanceMesh2 then @instanceMesh2.drawInstances(@camera, @instances2)
+
+      #if @needsScreenshot
+      #  @saveScreenshot('screenshots')
+      #  @needsScreenshot = false
 
     drawDepth: () ->
       @gl.clearColor(@bgColor.r, @bgColor.g, @bgColor.b, @bgColor.a)
@@ -200,20 +257,20 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         @needsScreenshot = false
 
     draw: () ->
-      if Platform.isPlask then @recorder.update();
-      timeline.Timeline.getGlobalInstance().update(Time.delta)
-      @camera.updateMatrices();
+      #if Platform.isPlask then @recorder.update();
+      #timeline.Timeline.getGlobalInstance().update(Time.delta)
+      #@camera.updateMatrices();
 
       @gl.clearColor(1, 0, 0, 1)
       @gl.clear(@gl.COLOR_BUFFER_BIT)
       @gl.disable(@gl.DEPTH_TEST)
 
-      color = fx().render({drawFunc: this.drawScene.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
-      depth = color.render({drawFunc: this.drawDepth.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
-      foggy = color.fog(depth, { fogColor: @bgColor, bpp2: 32 })
-      #foggy = foggy.fxaa();
-      foggy.blit({ width: @width, height: @height })
-      if Platform.isPlask then @recorder.capture()
+      #color = fx().render({drawFunc: this.drawScene.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      #depth = color.render({drawFunc: this.drawDepth.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      #foggy = color.fog(depth, { fogColor: @bgColor, bpp2: 32 })
+      #foggy.blit({ width: @width, height: @height })
+      @drawScene()
+      #if Platform.isPlask then @recorder.capture()
 
       #@draw = () -> console
   )
