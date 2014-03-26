@@ -42,7 +42,7 @@ function generateHar(url, harFilePath, callback) {
 }
 
 var allowCrossDomain = function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', 'http://marcinignac.com,http://localhost');
+  res.header('Access-Control-Allow-Origin', 'http://localhost');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
 
