@@ -8,7 +8,7 @@ pex = pex || require('./lib/pex')
 { Vec3, hem } = pex.geom
 { Color } = pex.color
 { MathUtils, Time, MovieRecorder } = pex.utils
-{ randomVec3, seed } = MathUtils
+{ randomVec3, seed, map, randomFloat } = MathUtils
 fx = pex.fx
 
 unique = (array) ->
@@ -70,14 +70,19 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       @camera = new PerspectiveCamera(60, @width / @height)
       @scene = new Scene()
       #@arcball = new Arcball(this, @camera)
-      @camera.target = new Vec3(0, 0, 20)
+      @camera.target = new Vec3(0, 0, -20)
 
       @bgColor = Color.create(0.15*0.9, 0.18*0.9, 0.226*0.9, 1)
 
     loadData: () ->
-      IO.loadTextFile("data/temp/theverge20140311.har", (data) =>
+      #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Fdevart.withgoogle.com%2F%23%2Fproject%2F17602419%3Fq%3Dyou%2520are', (data) =>
+      #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Fmarcinignac.com/', (data) =>
+      IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
         data = JSON.parse(data)
+        console.log(data.log.entries.map((e) -> e.request.url))
         @entries = data.log.entries
+
+        console.log('data.log.entries.length', data.log.entries.length)
 
         @mimeTypes = unique(@entries.map(getEntryMimeType))
         @servers = unique(@entries.map(getEntryUrl).map(urlToHostName))
@@ -89,21 +94,38 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         console.log( @mimeTypes, @rootServers)
 
         @buildInstances()
-        @buildInstances()
 
-        if Platform.isPlask then @recorder.start();
+        #if Platform.isPlask then @recorder.start();
 
         boom = () =>
-          @camera.position.z = -5
-          timeline.anim(@camera.position).to(0, {z:15}, 4, timeline.Timeline.Easing.Cubic.EaseInOut)
+          @camera.position.z = 5
+          #timeline.anim(@camera.position).to(0, {z:15}, 4, timeline.Timeline.Easing.Cubic.EaseInOut)
 
-        setInterval(boom, 4100)
+        #setInterval(boom, 4100)
 
         boom()
       )
 
     buildInstances: () ->
+      pageStartTime = 0
+      pageEndTime = 0
+      for entry in @entries
+        entryStartDate = new Date(entry.startedDateTime)
+        entryStartTime = entryStartDate.getTime()
+        entryTime = Number(entry.time)
+        entry._info = {}
+        entry._info.startTime = entryStartTime
+        entry._info.time = entryTime
+        entry._info.endTime = entryStartTime + entryTime
+        if !pageStartTime then pageStartTime = entryStartTime
+        pageEndTime = entryStartTime + entryTime
+
+      for entry in @entries
+        entry._info.pageStartTime = pageStartTime
+        entry._info.pageEndTime = pageEndTime
+
       @entries.map(@makeEntryInstance.bind(this))
+      console.log('buildInstances', 'done', @entries.length, (pageEndTime - pageStartTime)/1000 + 's')
 
     saveScreenshot: (path) ->
       d = new Date();
@@ -126,19 +148,20 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7)
       entryInstance = new Mesh(geom, new CorrectedGamma({diffuseColor: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
       entryInstance = new Mesh(geom, new SolidColor({color: white, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
-      entryInstance.position = randomVec3(10)
-      entryInstance.position.z += 9
+      #entryInstance.position = randomVec3(10)
+      info = entry._info
+      entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4, 4)
+      entryInstance.position.y = randomFloat(-1, 1)
+      entryInstance.position.z = 0
       @instances.push(entryInstance)
       #@scene.add(entryInstance)
 
       geom = new Cube(0.1, 0.1, 2.5, 2, 2, 7)
       entryInstance2 = new Mesh(geom, new CorrectedGamma({diffuseColor: color, specularColor: new Color(0.1, 0.1, 0.1, 1.0), ambientColor: new Color(0.1, 0.1, 0.1, 1), wrap: 1, correctGamma: true, conserveDiffuseEnergy: true }))
       entryInstance2.position = entryInstance.position.dup()
-      entryInstance2.position.z += 0.01 + 1.5
+      #entryInstance2.position.z += 0.01 + 1.5
       @instances.push(entryInstance2)
       @scene.add(entryInstance2)
-
-
 
     drawScene: () ->
       @gl.clearColor(@bgColor.r, @bgColor.g, @bgColor.b, @bgColor.a)
@@ -181,7 +204,7 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       timeline.Timeline.getGlobalInstance().update(Time.delta)
       @camera.updateMatrices();
 
-      @gl.clearColor(0, 0, 0, 1)
+      @gl.clearColor(1, 0, 0, 1)
       @gl.clear(@gl.COLOR_BUFFER_BIT)
       @gl.disable(@gl.DEPTH_TEST)
 

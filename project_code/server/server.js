@@ -17,16 +17,20 @@ function getHar(url, callback) {
 }
 
 function generateHar(url, harFilePath, callback) {
+  console.log('generateHar', url);
   var args = [
     config.PHANTOM_PATH + '/bin/phantomjs',
+    '--ignore-ssl-errors=yes',
     config.PHANTOM_PATH + '/examples/netsniff.js',
     url,
     '>',
     harFilePath
   ];
   var cmd = args.join(' ');
+  console.log('generateHar', cmd);
   var child = exec(cmd);
   child.on('close', function(err, msg) {
+    console.log('close');
     if (err) {
       callback(err, null);
     }
