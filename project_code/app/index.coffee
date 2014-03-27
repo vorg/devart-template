@@ -2,7 +2,7 @@ pex = pex || require('./lib/pex')
 
 harServer = 'http://node.variable.io:1337'
 
-pex.require([], () ->
+pex.require(['burst'], (Burst) ->
   { Platform, Window, IO } = pex.sys
 
   Window.create
@@ -13,6 +13,7 @@ pex.require([], () ->
 
     init: () ->
       if Platform.isBrowser then @initHTML()
+      @burst = new Burst(this)
     initHTML: () ->
       introDialog = document.getElementById('introContainer')
       queryInput = document.getElementById('query')
@@ -27,15 +28,19 @@ pex.require([], () ->
         makeQuery()
       )
 
-      makeQuery = () ->
+      makeQuery = () =>
         url = queryInput.value
         if !url
           alert('Please enter url')
           queryInput.focus()
         else
           request = harServer + '/' + encodeURIComponent(url)
-          IO.loadTextFile(request, (response) ->
-            console.log(response)
-          )
+          introDialog.style.opacity = 0
+          @burst.loadData(request, () ->
+            setTimeout(() ->
+              introDialog.style.opacity = 1
+            , 5000)
+          );
     draw: () ->
+      @burst.draw()
 )

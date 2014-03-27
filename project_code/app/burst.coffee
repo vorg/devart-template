@@ -1,58 +1,69 @@
-pex = pex || require('./lib/pex')
+define (require) ->
 
-{ IO, Window, Platform } = pex.sys
-{ PerspectiveCamera, Scene, Arcball } = pex.scene
-{ SolidColor, Diffuse, ShowDepth } = pex.materials
-{ Mesh } = pex.gl
-{ Cube } = pex.geom.gen
-{ Vec3, hem } = pex.geom
-{ Color } = pex.color
-{ MathUtils, Time, MovieRecorder } = pex.utils
-{ randomVec3, seed, map, randomFloat } = MathUtils
-fx = pex.fx
+  pex = require('pex')
 
-unique = (array) ->
-  array.sort().filter((e, i, arr) -> arr.lastIndexOf(e) == i)
+  { IO, Window, Platform } = pex.sys
+  { PerspectiveCamera, Scene, Arcball } = pex.scene
+  { SolidColor, Diffuse, ShowDepth } = pex.materials
+  { Mesh } = pex.gl
+  { Cube } = pex.geom.gen
+  { Vec3, hem } = pex.geom
+  { Color } = pex.color
+  { MathUtils, Time, MovieRecorder } = pex.utils
+  { randomVec3, seed, map, randomFloat } = MathUtils
+  fx = pex.fx
 
-getEntryMimeType = (entry) ->
-  entry.response.content.mimeType
+  CorrectedGamma = require('materials/CorrectedGamma')
+  Fog = require('fx/Fog')
+  TonemapLinear = require('fx/TonemapLinear')
+  TonemapReinhard = require('fx/TonemapReinhard')
+  TonemapUncharted = require('fx/TonemapUncharted')
+  TonemapRichard = require('fx/TonemapRichard')
+  timeline = require('lib/timeline')
 
-getEntryUrl = (entry) ->
-  entry.request.url
+  unique = (array) ->
+    array.sort().filter((e, i, arr) -> arr.lastIndexOf(e) == i)
 
-urlToHostName = (() ->
-  if Platform.isPlask
-    url = require('url')
-    (s) -> url.parse(s).hostname
-  else if Platform.isBrowser
-    a = document.createElement("a")
-    (s) ->
-      a.href = s;
-      a.hostname || s
-  else (s) -> s
-)()
+  getEntryMimeType = (entry) ->
+    entry.response.content.mimeType
 
-extractTopLevelDomain = (domain) ->
-  try
-    domain.match(/[^\.]+\.[^\.]+$/)[0]
-  catch e
-    if domain.indexOf('data') == 0 then return 'data'
-    else return 'undefined'
+  getEntryUrl = (entry) ->
+    entry.request.url
 
-# adds leading zeros to a number until certain length is met
-pad = (num, char, len) ->
-  s = '' + num
-  while s.length < len
-    s = char + s
-  s
+  urlToHostName = (() ->
+    if Platform.isPlask
+      url = global['require']('url')
+      (s) -> url.parse(s).hostname
+    else if Platform.isBrowser
+      a = document.createElement("a")
+      (s) ->
+        a.href = s;
+        a.hostname || s
+    else (s) -> s
+  )()
+
+  extractTopLevelDomain = (domain) ->
+    try
+      domain.match(/[^\.]+\.[^\.]+$/)[0]
+    catch e
+      if domain.indexOf('data') == 0 then return 'data'
+      else return 'undefined'
+
+  # adds leading zeros to a number until certain length is met
+  pad = (num, char, len) ->
+    s = '' + num
+    while s.length < len
+      s = char + s
+    s
 
 
-pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/TonemapReinhard', 'fx/TonemapUncharted', 'fx/TonemapRichard', 'lib/timeline'], (CorrectedGamma, Fog, TonemapLinear, TonemapReinhard, TonemapUncharted, TonemapRichard, timeline) ->
-  Window.create
-    settings:
-      width: 1024
-      height: 512
-      fullscreen: Platform.isBrowser
+  class Burst
+    constructor: (@win) ->
+      @width = @win.width
+      @height = @win.height
+      @gl = @win.gl
+      @init()
+
     init: () ->
       seed(0)
 
@@ -60,13 +71,13 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       if Platform.isBrowser then @gl.getExtension("OES_texture_float")
 
       @initScene()
-      @loadData()
+      #@loadData()
 
-      @needsScreenshot = false
-      @on('keyDown', (e) =>
-        if e.str == 'S'
-          @needsScreenshot = true
-      )
+      #@needsScreenshot = false
+      #@on('keyDown', (e) =>
+      #  if e.str == 'S'
+      #    @needsScreenshot = true
+      #)
 
 
     initScene: () ->
@@ -80,12 +91,11 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
 
       @bgColor = Color.create(0.15*0.9, 0.18*0.9, 0.226*0.9, 1)
 
-    loadData: () ->
-      #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Fdevart.withgoogle.com%2F%23%2Fproject%2F17602419%3Fq%3Dyou%2520are', (data) =>
-      #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Fmarcinignac.com/', (data) =>
-      #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
-      #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Ffacebook.com%2F', (data) =>
-      IO.loadTextFile('http://node.variable.io:1337/http%3A%2F%2Ftheverge.com', (data) =>
+    loadData: (url, callback) ->
+      @instances = []
+      @instances2 = []
+      
+      IO.loadTextFile(url, (data) =>
         console.log(data)
         data = JSON.parse(data)
         #console.log(data.log.entries.map((e) -> e.request.url))
@@ -103,6 +113,8 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         console.log( @mimeTypes, @rootServers)
 
         @buildInstances()
+
+        callback();
 
         #if Platform.isPlask then @recorder.start();
 
@@ -279,5 +291,3 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       #@drawScene()
       #if Platform.isPlask then @recorder.capture()
 
-      #@draw = () -> console
-  )
