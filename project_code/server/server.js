@@ -9,7 +9,26 @@ function getHar(url, callback) {
   var encodedUrl = new Buffer(url).toString('base64');
   var harFilePath = config.CACHE_PATH + '/' + encodedUrl + '.txt';
   if (fs.existsSync(harFilePath)) {
-    fs.readFile(harFilePath, { encoding: 'utf-8' }, callback);
+    console.log('loading', harFilePath);
+    fs.readFile(harFilePath, { encoding: 'utf-8' }, function(err, data) {
+      if (!err) {
+        try {
+          var json = JSON.parse(data);
+          if (json && json.log) {
+            callback(null, data);
+            return;
+          }
+        }
+        catch (e) {
+          generateHar(url, harFilePath, callback);
+          return;
+        }
+        generateHar(url, harFilePath, callback);
+      }
+      else {
+        callback(err, data);
+      }
+    });
   }
   else {
     generateHar(url, harFilePath, callback);
@@ -36,7 +55,7 @@ function generateHar(url, harFilePath, callback) {
     }
     else {
       if (fs.existsSync(harFilePath)) {
-        fs.readFile(harFilePath, { encoding: 'utf-8' }, callback);
+        fs.readFile(harFilePath, 'utf-8', callback);
       }
       else {
         callback(err, null);

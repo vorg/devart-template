@@ -95,6 +95,7 @@ else
       endReply: null
 
   page.onResourceReceived = (res) ->
+    console.log(res.id)
     if res.stage is 'start'
       page.resources[res.id].startReply = res
     if res.stage is 'end'
