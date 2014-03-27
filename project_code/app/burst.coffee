@@ -73,6 +73,7 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       @instances = []
       @instances2 = []
       @camera = new PerspectiveCamera(60, @width / @height)
+      @camera.setPosition(new Vec3(0, 0, 6));
       @scene = new Scene()
       #@arcball = new Arcball(this, @camera)
       @camera.target = new Vec3(0, 0, -20)
@@ -84,8 +85,8 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Fmarcinignac.com/', (data) =>
       #IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
       #IO.loadTextFile('http://localhost:1337/https%3A%2F%2Ffacebook.com%2F', (data) =>
-      IO.loadTextFile('http://localhost:1337/http%3A%2F%2Ftheverge.com', (data) =>
-        #console.log(data)
+      IO.loadTextFile('http://node.variable.io:1337/http%3A%2F%2Ftheverge.com', (data) =>
+        console.log(data)
         data = JSON.parse(data)
         #console.log(data.log.entries.map((e) -> e.request.url))
         @entries = data.log.entries
@@ -191,10 +192,10 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
       entryInstance.position = randomVec3(10)
 
       entryInstance.position.x = map(info.startTime, info.pageStartTime, info.pageEndTime, -4.5, 4.5)
-      entryInstance.position.y = randomFloat(-1, 1)
-      entryInstance.position.z = 1
+      entryInstance.position.y = randomFloat(-2, 2)
+      entryInstance.position.z = -30
       entryInstance.scale = new Vec3(1, 1, 1)
-      entryInstance.scale.x = info.time / 1000;
+      entryInstance.scale.x = 1 + info.time / 5000;
       entryInstance.scale.y = 1.4
       entryInstance.scale.z = 1.05
       if setCookies.length > 0
@@ -210,8 +211,13 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
         diffuseColor: color
       }
       entryInstance2.scale = new Vec3(1, 1, 1)
-      entryInstance2.scale.x = info.time / 1000;
-      #entryInstance2.position.z += 0.01 + 1.5
+      entryInstance2.scale.x = 1 + info.time / 5000;
+
+      entryInstance2.position.z = -30
+
+      delay = map(info.startTime, info.pageStartTime, info.pageEndTime, 1, 5)
+      timeline.anim(entryInstance2.position).to(delay, {z:0}, 1, timeline.Timeline.Easing.Cubic.EaseInOut)
+      timeline.anim(entryInstance.position).to(delay, {z:0}, 1, timeline.Timeline.Easing.Cubic.EaseInOut)
       @instances.push(entryInstance2)
 
       #@scene.add(entryInstance2)
@@ -237,20 +243,20 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
 
       if !@showDepthMaterial
         @showDepthMaterial = new ShowDepth({
-          far: 9
+          far: 30
         })
 
-      oldMaterials = @instances.map((instance) =>
-        oldMaterial = instance.material
-        instance.setMaterial(@showDepthMaterial)
-        oldMaterial
-      )
+      if !@instanceMesh then return
 
-      @scene.draw(@camera)
+      oldMaterial = @instanceMesh.material
+      @instanceMesh.setMaterial(@showDepthMaterial)
+      @instanceMesh2.setMaterial(@showDepthMaterial)
 
-      oldMaterials.forEach((material, index) =>
-        @instances[index].setMaterial(material)
-      )
+      if @instanceMesh then @instanceMesh.drawInstances(@camera, @instances)
+      if @instanceMesh2 then @instanceMesh2.drawInstances(@camera, @instances2)
+
+      @instanceMesh.setMaterial(@instanceGammaMaterial)
+      @instanceMesh2.setMaterial(@instanceGammaMaterial)
 
       if @needsScreenshot
         @saveScreenshot('screenshots')
@@ -258,18 +264,19 @@ pex.require(['materials/CorrectedGamma', 'fx/Fog', 'fx/TonemapLinear', 'fx/Tonem
 
     draw: () ->
       #if Platform.isPlask then @recorder.update();
-      #timeline.Timeline.getGlobalInstance().update(Time.delta)
+      timeline.Timeline.getGlobalInstance().update(Time.delta)
       #@camera.updateMatrices();
 
       @gl.clearColor(1, 0, 0, 1)
       @gl.clear(@gl.COLOR_BUFFER_BIT)
       @gl.disable(@gl.DEPTH_TEST)
 
-      #color = fx().render({drawFunc: this.drawScene.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
-      #depth = color.render({drawFunc: this.drawDepth.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
-      #foggy = color.fog(depth, { fogColor: @bgColor, bpp2: 32 })
-      #foggy.blit({ width: @width, height: @height })
-      @drawScene()
+      color = fx().render({drawFunc: this.drawScene.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      depth = color.render({drawFunc: this.drawDepth.bind(this), bpp2: 32, depth: true, width: @width, height: @height})
+      foggy = color.fog(depth, { fogColor: @bgColor, bpp2: 32 })
+      foggy = foggy.fxaa()
+      foggy.blit({ width: @width, height: @height })
+      #@drawScene()
       #if Platform.isPlask then @recorder.capture()
 
       #@draw = () -> console
