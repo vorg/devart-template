@@ -30,12 +30,17 @@ createHAR = function(address, title, startTime, resources) {
   var entries;
   entries = [];
   resources.forEach(function(resource) {
-    var endReply, request, startReply;
+    var endReply, header, request, startReply, _i, _len, _ref;
     request = resource.request;
     startReply = resource.startReply;
     endReply = resource.endReply;
     if (!request || !startReply || !endReply) {
       return;
+    }
+    _ref = request.headers;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      header = _ref[_i];
+      header.value = '';
     }
     return entries.push({
       startedDateTime: request.time.toISOString(),
@@ -120,7 +125,6 @@ if (system.args.length === 1) {
     };
   };
   page.onResourceReceived = function(res) {
-    console.log(res.id);
     if (res.stage === 'start') {
       page.resources[res.id].startReply = res;
     }

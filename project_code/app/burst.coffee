@@ -96,8 +96,11 @@ define (require) ->
       @instances2 = []
       
       IO.loadTextFile(url, (data) =>
-        console.log(data)
-        data = JSON.parse(data)
+        data = JSON.parse(data, (k, v) -> v)
+        console.log('data', data);
+        if data.error
+          callback()
+          return
         #console.log(data.log.entries.map((e) -> e.request.url))
         @entries = data.log.entries
 
@@ -165,6 +168,7 @@ define (require) ->
       @gl.writeImage('png', filename)
 
     mimeTypeToColor: (mimeType) ->
+      mimeType = '' + mimeType
       #r = entryIndex/32
       #hue = @mimeTypes.indexOf(mimeType) / @mimeTypes.length
       hue = 0

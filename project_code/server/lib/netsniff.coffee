@@ -23,6 +23,9 @@ createHAR = (address, title, startTime, resources) ->
     if not request or not startReply or not endReply
       return
 
+    for header in request.headers
+      header.value = ''
+
     entries.push
       startedDateTime: request.time.toISOString()
       time: endReply.time - request.time
@@ -95,7 +98,6 @@ else
       endReply: null
 
   page.onResourceReceived = (res) ->
-    console.log(res.id)
     if res.stage is 'start'
       page.resources[res.id].startReply = res
     if res.stage is 'end'

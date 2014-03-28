@@ -106,8 +106,14 @@ define(function(require) {
       return IO.loadTextFile(url, (function(_this) {
         return function(data) {
           var boom;
-          console.log(data);
-          data = JSON.parse(data);
+          data = JSON.parse(data, function(k, v) {
+            return v;
+          });
+          console.log('data', data);
+          if (data.error) {
+            callback();
+            return;
+          }
           _this.entries = data.log.entries;
           console.log('data.log.entries.length', data.log.entries.length);
           _this.mimeTypes = unique(_this.entries.map(getEntryMimeType));
@@ -190,6 +196,7 @@ define(function(require) {
 
     Burst.prototype.mimeTypeToColor = function(mimeType) {
       var hue;
+      mimeType = '' + mimeType;
       hue = 0;
       if (mimeType.indexOf('javascript') !== -1 || mimeType.indexOf('ecmascript') !== -1) {
         hue = 0.57;

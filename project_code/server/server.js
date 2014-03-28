@@ -40,7 +40,7 @@ function generateHar(url, harFilePath, callback) {
   var args = [
     config.PHANTOM_PATH + '/bin/phantomjs',
     '--ignore-ssl-errors=yes',
-    config.PHANTOM_PATH + '/examples/netsniff.js',
+    'lib/netsniff.js',
     url,
     '>',
     harFilePath
